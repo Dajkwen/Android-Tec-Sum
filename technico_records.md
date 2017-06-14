@@ -22,3 +22,7 @@
 
 ### Android 技术点总结【Fragment 加载方式】
 
+### Android 技术点总结【权限管理】
+
+
+
