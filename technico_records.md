@@ -50,6 +50,98 @@ Handler 加 Thread 实现。这种方式就是通过 handler 每隔一个时间�
 
 ### Android 技术点总结【权限管理】
 
+对于 android sdk 23 之前的权限使用是在 manifest 文件里事先申请好就好了的，但 23 及以后的版本就是通过动态申请了。并且权限也被划分成了三类，一类中按组划分。
+
+Normal Permissions
+
+这些权限是不会涉及到用户隐私及个人安全的，所以这些权限在 manifest 文件里被事先授权，使用时可以直接使用。具体的权限有：
+
+| 名称                                   | 说明                                       |
+| ------------------------------------ | ---------------------------------------- |
+| ACCESS_LOCATION_EXTRA_COMMANDS       | 获取定位的额外指令（不懂哪里用的到）                       |
+| ACCESS_NETWORK_STATE                 | 获取网络信息                                   |
+| ACCESS_NOTIFICATION_POLITY           | 希望获取通知政策                                 |
+| ACCESS_WIFI_STATE                    | 获取无线网络的信息                                |
+| BLUETOOTH                            | 允许应用连接已配对过的蓝牙设备                          |
+| BLUETOOTH_ADMIN                      | 允许应用发现和连接找到的蓝牙设备                         |
+| BROADCAST_STICKY                     | 允许应用广播粘性意图（这应该是广播一些系统意图）                 |
+| CHANGE_NETWORK_STATE                 | 允许应用改变网络连接状况                             |
+| CHANGE_WIFI_MULTICAST_STATE          | 允许应用进入无线多播模式                             |
+| CHANGE_WIFI_STATE                    | 允许应用改变无线网络连接状况                           |
+| DISABLE_KEYGUARD                     | 允许应用禁用锁屏                                 |
+| EXPAND_STATUS_BAR                    | 允许应用展开或者合起状态栏                            |
+| GET_PACKAGE_SIZE                     | 允许应用获取任意软件的使用空间（就是看看软件占多大）               |
+| INSTALL_SHORTCUT                     | 允许应用安装快捷启动                               |
+| INTERNET                             | 允许应用打开网络端口                               |
+| KILL_BACKGROUND_PROCESSES            | 允许应用调用 killBackgroundProcesses( String ) 来杀死后台进程 |
+| MODIFY_AUDIO_SETTINGS                | 允许应用修改全局的声音设置                            |
+| NFC                                  | 允许应用通过 NFC 进行数据通信                        |
+| READ_SYNC_SETTINGS                   | 允许应用访问同步设置                               |
+| READ_SYNC_STATS                      | 允许应用获取同步状态                               |
+| RECEIVE_BOOT_COMPLETED               | 允许应用接收到系统启动成功的广播消息                       |
+| REORDER_TASKS                        | 允许应用重拍任务顺序                               |
+| REQUEST_IGNORE_BATTERY_OPTIMIZATIONS | 跟电池相关，应该是允许忽略电池优化之类的                     |
+| REQUEST_INSTALL_PACKAGES             | 允许应用安装，在 api 25 及以后必须要有这个权限              |
+| SET_ALARM                            | 允许应用以广播的形式向用户发出警告                        |
+| SET_TIME_ZONE                        | 允许应用设置时区                                 |
+| SET_WALLPAPER                        | 允许应用设置墙纸                                 |
+| SET_WALLPAPER_HINTS                  | 允许应用设置墙纸提示                               |
+| TRANSMIT_IR                          | 允许应用使用设备的红外线发射器                          |
+| UNINSTALL_SHORTCUT                   | 不再使用了                                    |
+| USE_FINGERPRINT                      | 允许应用使用指纹设备                               |
+| VIBRATE                              | 允许应用使用振动器                                |
+| WAKE_LOCK                            | 允许应用唤醒                                   |
+| WRITE_SYNC_SETTINGS                  | 允许应用设置同步参数                               |
+
+
+
+Dangerous Permissions
+
+这些权限是涉及到用户隐私及安全，读取用户数据及资源，根据 android 版本不同获取这些权限的方式有所区别。要是手机的系统是 6.0及以上，或者 app 的 targetSdkVersion 是 6.0 及以上，权限是动态访问的，需要的时候去申请。要是 6.0 以下，则在 app 安装的时候回去询问获取权限。
+
+权限组。在申请权限的时候，若该权限所在组里的权限都没有被授权过，则会提示用户授权；若是有其他权限已经获取到了授权，那该权限组的其他权限都可以被授权，直接通过。
+
+| 权限组        | 权限                     | 说明                                       |
+| ---------- | ---------------------- | ---------------------------------------- |
+| CALENDAR   | READ_CALENDAR          | 读取日历数据                                   |
+|            | WRITE_CALENDAR         | 写入日历数据                                   |
+| CAMERA     | CAMERA                 | 要求访问摄像头设备                                |
+| CONTACTS   | READ_CONTACTS          | 读取用户联系人数据                                |
+|            | WRITE_CONTACTS         | 写入用户联系人数据                                |
+|            | GET_ACCOUNTS           | 获取账号信息（不知道哪里用）                           |
+| LOCATION   | ACCESS_FINE_LOCATION   | 获取精准定位信息                                 |
+|            | ACCESS_COARSE_LOCATION | 获取近似定位信息                                 |
+| MICROPHONE | RECORD_AUDIO           | 录取声音                                     |
+| PHONE      | READ_PHONE_STATE       | 仅仅获取手机状态，包括手机序列号，移动网络信息，正在打的电话，以及注册的手机账号 |
+|            | CALL_PHONE             | 发起打电话操作                                  |
+|            | READ_CALL_LOG          | 获取通话记录，要是 minSdkVersion 或者 targetSdkVersion 小于等于 15，并且获取到 READ_CONTACTS 权限，这个权限也就自动获取了 |
+|            | WRITE_CALL_LOG         | 写入通话记录                                   |
+|            | ADD_VOICEMAIL          | 添加语音邮件到系统中                               |
+|            | USE_SIP                | 允许使用 SIP 服务                              |
+|            | PROCESS_OUTGOING_CALLS | 跟电话相关，呼叫转移？                              |
+| SENSORS    | BODY_SENSORS           | 获取传感器数据，包括心率等身体数据                        |
+| SMS        | SEND_SMS               | 允许发送短消息                                  |
+|            | RECEIVE_SMS            | 获取短消息                                    |
+|            | READ_SMS               | 读取短消息                                    |
+|            | RECEIVE_WAP_PUSH       | 接收 wap 推送消息                              |
+|            | RECEIVE_MMS            | 获取彩信消息                                   |
+| STORAGE    | READ_EXTERNAL_STORAGE  | 读取外部存储数据，要是已经获取到了 WRITE_EXTERNAL_STORAGE，该权限将自动获取，从 19 开始，要求需要申请获取 |
+|            | WRITE_EXTERNAL_STORAGE | 写入外部存储数据。                                |
+
+
+
+最后一种特殊权限，涉及到的应该不多，暂且不做分析。
+
+
+
+权限检查。调用 ContextCompat.checkSelfPermission() 
+
+解释需要权限的原因。调用 shouldShowRequestPermissionRationale()，判断是否需要解释，解释的对话框或者提示就需要自定义了。
+
+请求权限。异步调用 requestPermissions()
+
+处理权限请求响应。onRequestPermissionsResult() 该方法入参有三个。requestCode 表示自定义的请求码用以区分，permissions[] 是我们请求时的权限们，grantResults[] 是请求结果，要是用户取消了，其长度为 0 ，要是授权或者拒绝那取数组的第一位。
+
 ### Android 技术点总结【Gradle 配置】
 
 gradle 配置的话有两点：
