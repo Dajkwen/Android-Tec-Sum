@@ -56,5 +56,3 @@ gradle 配置的话有两点：
 
 1. Setting 里的 gradle 这个地方是配置用 wrapper 还是用本地的 gradle 版本来构建项目，如果是 wrapper 那简单些，gradle 版本就在 wrapper 里的 gradle-wrapper 配置文件中；如果是本地，那么指向本地安装的 gradle 版本的安装路径就可以了。所以在 console 中如果用 gradle 带头的命令，那用的就是本地的gradle, 如果用 gradlew 就是用的 gradle wrapper 里的命令。
 2. 在项目工程里的 build.gradle 文件中也有一个 gradle 版本，这个版本是 studio 的 gradle plugin 版本，这个版本是指插件版本。在 project structure 里面的 project 的 gradle version 就是 wrapper 里的版本，而 gradle plugin version 就是项目工程里的 build.gradle 的插件版本号。
-
-关于插件版本，gradle 构建版本以及 module 的 buildtool 版本之间存在着一个关系，后面再研究一下。
