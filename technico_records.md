@@ -148,3 +148,28 @@ gradle 配置的话有两点：
 
 1. Setting 里的 gradle 这个地方是配置用 wrapper 还是用本地的 gradle 版本来构建项目，如果是 wrapper 那简单些，gradle 版本就在 wrapper 里的 gradle-wrapper 配置文件中；如果是本地，那么指向本地安装的 gradle 版本的安装路径就可以了。所以在 console 中如果用 gradle 带头的命令，那用的就是本地的gradle, 如果用 gradlew 就是用的 gradle wrapper 里的命令。
 2. 在项目工程里的 build.gradle 文件中也有一个 gradle 版本，这个版本是 studio 的 gradle plugin 版本，这个版本是指插件版本。在 project structure 里面的 project 的 gradle version 就是 wrapper 里的版本，而 gradle plugin version 就是项目工程里的 build.gradle 的插件版本号。
+
+### Android 技术点总结【Handler】
+
+handler 是什么
+
+官方解释是说用来发送和处理消息，以及通过 runnable 来接收回调的。一个线程有且仅有一个 messagequene，可以有多个 handler。handler 就是通过 messagequene 来协作处理消息的。当我们的应用运行起来之后会有一个主线程 「UI 线程」自己就有一个 messagequene ，我们可以在自己的线程里创建自己的 messagequeue。
+
+
+
+handler 怎么用
+
+首先是在一个线程中，我们可以通过发消息或者实例化 runnable 来等待回调两种方式进行 handler 的使用。
+
+1. 发消息的方法有 sendMessage(Message)；sendEmptyMessage(int)；sendEmptyMessageDelayed(int) 等。这里同样有一个点要注意，有些方法是告诉消息队列立马去加入队列执行的，有些则是延后一段时间，或者在未来一个固定时间执行。通过发消息的方式可以在 message 里面夹带一些数据，进行数据通信。
+2. 使用 runnable 的方法有 postDelayed(Runnable, long)；post(Runnable)；postAtTime(Runnable, long)等。和发送消息一样，这里也有区分是立马执行还是延后执行。
+
+然后是主线程与子线程的交互。因为主线程不能做耗时的事，所以要放在子线程里，但是我们有时候又需要子线程做完耗时任务之后来更新主线程的 UI 显示，这时候 handler 就起到了子主线程通信的目的，所以这里就只好用 sendMessage 这种形式了。
+
+最后就是子线程与子线程的交互。
+
+
+
+handler 要避开的误区
+
+handler 有个方法叫 postDelayed(Runnable, long)。以为在这个 runnable 里面可以做耗时操作，前几日看了一篇文章之后，发现要对 handler 有所梳理，才知道这个 runnable 是运行在了 handler 所在的线程中，而要是 handler 所在线程是主线程，那么这个 runnable 必然不能做耗时操作。其实要是 handler 是在主线程中，其他方法的 runnable 都不可以做耗时。
