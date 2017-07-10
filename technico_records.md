@@ -168,8 +168,12 @@ handler 怎么用
 
 最后就是子线程与子线程的交互。
 
+线程默认是没有自己的消息队列的，那么怎么才能有呢？这就要涉及到一个叫 Looper 的东西了。Looper 是为了给线程维护一个消息循环而存在的，线程可以通过它来建立自己个 messagequeue，但要注意消息队列也只能有且只有一个，之后在线程里新建的 handler 会自动依附到这个线程，发送及处理的消息也都来自线程里的 messagequeue。要使线程变成一个 looper 就先调用 prepare()，调用 loop() 表示开始消息循环，最后停止了要调用quit()
+
 
 
 handler 要避开的误区
 
-handler 有个方法叫 postDelayed(Runnable, long)。以为在这个 runnable 里面可以做耗时操作，前几日看了一篇文章之后，发现要对 handler 有所梳理，才知道这个 runnable 是运行在了 handler 所在的线程中，而要是 handler 所在线程是主线程，那么这个 runnable 必然不能做耗时操作。其实要是 handler 是在主线程中，其他方法的 runnable 都不可以做耗时。
+1. handler 有个方法叫 postDelayed(Runnable, long)。以为在这个 runnable 里面可以做耗时操作，前几日看了一篇文章之后，发现要对 handler 有所梳理，才知道这个 runnable 是运行在了 handler 所在的线程中，而要是 handler 所在线程是主线程，那么这个 runnable 必然不能做耗时操作。其实要是 handler 是在主线程中，其他方法的 runnable 都不可以做耗时。
+2. 通过 handler 要发送消息的时候，message 可以创建，但这样会造成资源的开销，每次都要 new 一个出来，而其实在 Message 类里面有一个消息池，大小是 50 个，而如果我们去池子里去拿，就避免了重复创建新 message 了，如果池子里没有可用的，那其实它才会去创建一个新的给我们，这里我们就用 Handler 的 obtainMessage() 就可以，类似的方法还有几个。
+
