@@ -147,7 +147,28 @@ Dangerous Permissions
 gradle 配置的话有两点：
 
 1. Setting 里的 gradle 这个地方是配置用 wrapper 还是用本地的 gradle 版本来构建项目，如果是 wrapper 那简单些，gradle 版本就在 wrapper 里的 gradle-wrapper 配置文件中；如果是本地，那么指向本地安装的 gradle 版本的安装路径就可以了。所以在 console 中如果用 gradle 带头的命令，那用的就是本地的gradle, 如果用 gradlew 就是用的 gradle wrapper 里的命令。
+
+   如下图所示
+
+   ![QQ截图20170722170758](C:\Users\Jkwen\Desktop\QQ截图20170722170758.png)
+
 2. 在项目工程里的 build.gradle 文件中也有一个 gradle 版本，这个版本是 studio 的 gradle plugin 版本，这个版本是指插件版本。在 project structure 里面的 project 的 gradle version 就是 wrapper 里的版本，而 gradle plugin version 就是项目工程里的 build.gradle 的插件版本号。
+
+   在右侧的项目结构里，如图所示：
+
+   ![QQ截图20170722171313](C:\Users\Jkwen\Desktop\QQ截图20170722171313.png)
+
+   标 1 就是 gradle plugin 的版本设置；标 2 就是 wrapper 里和 plugin 对应的 gradle 版本设置。
+
+   那在 project structure 中的这两点如下图所示：
+
+   ![QQ截图20170722171402](C:\Users\Jkwen\Desktop\QQ截图20170722171402.png)
+
+   那么 gradle plugin 和 gradle 之间的版本是如何匹配的呢：
+
+   ![QQ截图20170722172052](C:\Users\Jkwen\Desktop\QQ截图20170722172052.png)
+
+   官网上面有这么一个对应关系表。也就是说如果 pugin 设置为 2.0.0，那么 gradle 就可以是 2.10 至 2.13 之间。那么选择哪个版本好呢，我想应该考虑最新的为佳吧，但是用老版本也没什么问题，就是不要太老了，我目前项目用的就是 2.0.0 对应 2.10 的配置。
 
 ### Android 技术点总结【Handler】
 
@@ -176,4 +197,57 @@ handler 要避开的误区
 
 1. handler 有个方法叫 postDelayed(Runnable, long)。以为在这个 runnable 里面可以做耗时操作，前几日看了一篇文章之后，发现要对 handler 有所梳理，才知道这个 runnable 是运行在了 handler 所在的线程中，而要是 handler 所在线程是主线程，那么这个 runnable 必然不能做耗时操作。其实要是 handler 是在主线程中，其他方法的 runnable 都不可以做耗时。
 2. 通过 handler 要发送消息的时候，message 可以创建，但这样会造成资源的开销，每次都要 new 一个出来，而其实在 Message 类里面有一个消息池，大小是 50 个，而如果我们去池子里去拿，就避免了重复创建新 message 了，如果池子里没有可用的，那其实它才会去创建一个新的给我们，这里我们就用 Handler 的 obtainMessage() 就可以，类似的方法还有几个。
+
+
+### Android 技术点总结【inflater 加载布局】
+
+在项目开发中会遇到 listView, RecyclerView 的 item 布局加载，自定义空间的布局加载等等，加载的时候会遇到两种加载方式
+
+```java
+View.inflate(Context, int, ViewGroup)
+```
+
+```java
+LayoutInflater.from(Context).inflate(int, ViewGroup)
+```
+
+以前都是认为在加载自定义空间布局的时候用 View 的，加载列表 item 的时候用 LayoutInflater 的。其实这两个之间是没有差别的。先来分析 View 方式的加载。
+
+##### View.inflate()
+
+先上源码品一品
+
+![QQ截图20170722175705](C:\Users\Jkwen\Desktop\QQ截图20170722175705.png)
+
+一眼看出，其实这就是 LayoutInflater 的布局加载方式。那么为什么会有两种写法呢，我想 android 它应该提供给我们的是 View 的加载方式，（因为布局和 View 有关嘛），而 LayoutInflater 的加载方式应该算是其内部的实现机制，恰好我们也可以直接用，所以如果我们也写了一个加载布局的方式，外部也可以包装一下，但内部实现应该还是 LayoutInflater。说到这里我们可以在看下 Activity 类中的 onCreate(Bundle) 方法里的 setContentView(int) 方法的内部实现。
+
+![QQ截图20170722180706](C:\Users\Jkwen\Desktop\QQ截图20170722180706.png)
+
+![QQ截图20170722180726](C:\Users\Jkwen\Desktop\QQ截图20170722180726.png)
+
+看代码实现好像还用到了代理模式（这个以后再说，只是看到了getDelegate() 这个方法猜想一下），最后我们看到加载方式也是 LayoutInflater，可见不管外面看去布局加载方式有不同，但内部最终实现还是一处的。既然知道了最终加载布局的方式还是 LayoutInflater，那我们就来看看这个加载布局的方式。
+
+##### LayoutInflater.from(Context).inflate(int, ViewGroup)
+
+同样我们也是先上源码分析：
+
+![QQ截图20170722181348](C:\Users\Jkwen\Desktop\QQ截图20170722181348.png)
+
+![QQ截图20170722181403](C:\Users\Jkwen\Desktop\QQ截图20170722181403.png)
+
+像这种实现功能的设计应该就是 builder 模式（对话框实现也是这样），from(Context) 方法返回的就是 LayoutInflater 实例，可见 LayoutInflater 其实是通过获取系统服务得到的，那么我们其实也可以直接通过获取系统服务去得到，这里 android 又为我们做了包装。然后 inflate(int, ViewGroup) 又调用了自身的一个重写方法变成了三个入参。多出来的第三个参数叫 attachToRoot，官方解释是这样的
+
+```java
+attachToRoot Whether the inflated hierarchy should be attached to
+             the root parameter? If false, root is only used to create the
+             correct subclass of LayoutParams for the root view in the XML.
+```
+
+意思就是来控制是否跟第二个入参有关联，false 的话 root 就只是用来创建 layoutParams 参数，而 true 的话那就会将这个加载的布局关联到 root 上。那对应到我们经常使用的两个布局加载方式上，若是 ViewGroup 的入参为 null 那么这个值就是 false。如果不为 null 那么就是 true。如果直接用 LayoutInflater 的三个入参的方法，那就可以直接设置 true 或者 false。
+
+
+
+参考资料
+
+ [Android LayoutInflater原理分析，带你一步步深入了解View(一)](http://blog.csdn.net/guolin_blog/article/details/12921889)
 
